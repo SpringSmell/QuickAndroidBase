@@ -28,10 +28,10 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.0.2'
 
     api 'com.github.SpringSmell:QuickAsync:1.0.0'
-    api 'com.github.SpringSmell:QuickHttp:1.0.0'
-    api 'com.github.SpringSmell:QuickDialog:1.0.0'
-    api 'com.github.SpringSmell:QuickAdapter:1.0.0'
-    api 'com.github.SpringSmell:QuickViewHolder:1.0.0'
+    api 'com.github.SpringSmell:QuickHttpService:1.0.3'
+    api 'com.github.SpringSmell:QuickDialog:1.0.1'
+    api 'com.github.SpringSmell:QuickAdapter:1.0.1'
+    api 'com.github.SpringSmell:QuickViewHolder:1.0.1'
     api 'com.github.SpringSmell:QuickStartActivity:1.0.0'
 }
 repositories {

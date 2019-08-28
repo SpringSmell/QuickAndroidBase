@@ -8,7 +8,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.annotation.LayoutRes
-import org.quick.viewHolder.QuickVH
+import org.quick.viewHolder.ViewHolder
 
 /**
  * @describe
@@ -21,14 +21,14 @@ class QuickToast private constructor() {
     private val mainHandler: Handler by lazy { return@lazy Handler(Looper.getMainLooper()) }
     private lateinit var builder: Builder
     private var toast: Toast? = null
-    private var holder: QuickVH? = null
+    private var holder: ViewHolder? = null
 
     private fun setupToast(builder: Builder): QuickToast {
         this.builder = builder
         return this
     }
 
-    fun showToast(msg: String?): QuickVH {
+    fun showToast(msg: String?): ViewHolder {
         val toast = configToast(msg)
         mainHandler.post {
             toast.show()
@@ -48,11 +48,11 @@ class QuickToast private constructor() {
     }
 
     @SuppressLint("ResourceType")
-    private fun createViewHolder(): QuickVH {
+    private fun createViewHolder(): ViewHolder {
         if (holder?.itemView?.id != builder.resId) {
             val tempView = (QuickAndroid.applicationContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater).inflate(builder.resId, null)
             tempView.id = builder.resId
-            holder = QuickVH(tempView)
+            holder = ViewHolder(tempView)
         }
         return holder!!
     }
