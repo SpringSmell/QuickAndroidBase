@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package org.quick.base
 
 import android.content.BroadcastReceiver
@@ -5,11 +7,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Parcelable
 
 import android.util.SparseArray
 import androidx.annotation.NonNull
+import androidx.annotation.Size
 import java.io.Serializable
-
 /**
  * @describe 方便的使用动态广播
  * @author ChrisZou
@@ -29,14 +32,17 @@ object QuickBroadcast {
             var action = ""
             for (index in 0 until onBroadcastListenerActions.size())
                 if (onBroadcastListenerActions.valueAt(index).any { tempAction ->
-                            actions.any {
-                                if (it == tempAction) {
-                                    action = tempAction
-                                    true
-                                } else false
-                            }
-                        })
-                    onBroadcastListeners[onBroadcastListenerActions.keyAt(index)]?.invoke(action, intent)
+                        actions.any {
+                            if (it == tempAction) {
+                                action = tempAction
+                                true
+                            } else false
+                        }
+                    })
+                    onBroadcastListeners[onBroadcastListenerActions.keyAt(index)]?.invoke(
+                        action,
+                        intent
+                    )
         }
     }
 
@@ -44,15 +50,15 @@ object QuickBroadcast {
         QuickAndroid.applicationContext.registerReceiver(broadcastReceiver, IntentFilter(ACTION))
     }
 
-    fun sendBroadcast(@NonNull vararg action: String) {
-        sendBroadcast(null, *action)
+    fun send(@NonNull @Size(min = 1) vararg action: String) {
+        send(null, *action)
     }
 
     /**
      * @param intent 协带参数
      * @param action 发送目标
      */
-    fun sendBroadcast(intent: Intent?, @NonNull vararg action: String) {
+    fun send(intent: Intent?, @NonNull @Size(min = 1) vararg action: String) {
         val tempIntent = intent ?: Intent()
         tempIntent.action = ACTION
         tempIntent.putExtra(ACTION, action)
@@ -64,7 +70,10 @@ object QuickBroadcast {
      * @param onMsgListener 消息回调
      * @param action 接收目标
      */
-    fun addBroadcastListener(binder: Any, onMsgListener: (action: String, intent: Intent) -> Unit, vararg action: String) {
+    fun addListener(
+        binder: Any,
+        onMsgListener: (action: String, intent: Intent) -> Unit, @NonNull @Size(min = 1) vararg action: String
+    ) {
         onBroadcastListeners.put(binder.hashCode(), onMsgListener)
         onBroadcastListenerActions.put(binder.hashCode(), action as Array<String>?)
     }
@@ -73,7 +82,7 @@ object QuickBroadcast {
      * 移除消息回调
      * @param binder 绑定者
      */
-    fun removeBroadcastListener(binder: Any) {
+    fun removeListener(binder: Any) {
         onBroadcastListeners.remove(binder.hashCode())
         onBroadcastListenerActions.remove(binder.hashCode())
     }
@@ -88,6 +97,11 @@ object QuickBroadcast {
 
     class Builder {
         var intent: Intent = Intent()
+
+        fun addParams(key: String, value: Intent): Builder {
+            intent.putExtra(key, value)
+            return this
+        }
 
         fun addParams(key: String, vararg value: String): Builder {
             if (value.size == 1) intent.putExtra(key, value[0]) else intent.putExtra(key, value)
@@ -145,6 +159,11 @@ object QuickBroadcast {
         }
 
         fun addParams(key: String, value: Serializable): Builder {
+            intent.putExtra(key, value)
+            return this
+        }
+
+        fun addParams(key: String, value: Parcelable): Builder {
             intent.putExtra(key, value)
             return this
         }
