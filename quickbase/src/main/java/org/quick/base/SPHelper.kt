@@ -3,6 +3,7 @@ package org.quick.base
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.os.Parcelable
 import android.util.Log
 import java.io.Serializable
 
@@ -17,7 +18,12 @@ import java.io.Serializable
  */
 object SPHelper {
 
-    private val mSharedPreferences: SharedPreferences by lazy { return@lazy QuickAndroid.applicationContext.getSharedPreferences(QuickAndroid.appBaseName, Context.MODE_PRIVATE) }
+    private val mSharedPreferences: SharedPreferences by lazy {
+        return@lazy QuickAndroid.applicationContext.getSharedPreferences(
+            QuickAndroid.appBaseName,
+            Context.MODE_PRIVATE
+        )
+    }
     private val mEditor: SharedPreferences.Editor = mSharedPreferences.edit()
 
     fun putValue(key: String, value: String): SPHelper {
@@ -56,15 +62,15 @@ object SPHelper {
     }
 
     fun <T> getValue(key: String, defaultValue: T): T = try {
-        if (all[key] == null) defaultValue else when(defaultValue){
+        if (all[key] == null) defaultValue else when (defaultValue) {
             is String -> all[key].toString() as T
             is Int -> all[key].toString().toInt() as T
             is Boolean -> all[key].toString().toBoolean() as T
             is Long -> all[key].toString().toLong() as T
             is Float -> all[key].toString().toFloat() as T
             is Double -> all[key].toString().toDouble() as T
-
-            is Serializable -> all[key].toString() as T
+            is Parcelable -> all[key] as T
+            is Serializable -> all[key] as T
             is java.util.ArrayList<*> -> all[key] as T
             is Bundle -> all[key].toString() as T
 

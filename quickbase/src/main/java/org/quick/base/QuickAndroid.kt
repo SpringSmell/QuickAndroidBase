@@ -1,5 +1,3 @@
-@file:Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-
 package org.quick.base
 
 import android.annotation.SuppressLint
@@ -19,12 +17,12 @@ object QuickAndroid {
     /**
      * app的基础名称，用于配置SharedPreferences
      */
-    var appBaseName = javaClass.`package`.name + "-" + javaClass.simpleName
+    var appBaseName = ""
     lateinit var applicationContext: Context
 
     fun init(applicationContext: Context) {
         this.applicationContext = applicationContext.applicationContext
-        appBaseName = applicationContext.packageName+System.currentTimeMillis().toString()
+        appBaseName = applicationContext.packageName+"-" + javaClass.simpleName
     }
 
     /**
