@@ -33,7 +33,7 @@ dependencies {
     api 'com.github.SpringSmell:QuickAsync:1.0.2'
     api 'com.github.SpringSmell:QuickHttpService:1.0.8'
     api 'com.github.SpringSmell:QuickDialog:1.0.2'
-    api 'com.github.SpringSmell:QuickAdapter:1.0.6'
+    api 'com.github.SpringSmell:QuickAdapter:1.0.7'
     api 'com.github.SpringSmell:QuickStartActivity:1.0.2'
 }
 repositories {
