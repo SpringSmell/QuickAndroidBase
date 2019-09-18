@@ -30,11 +30,11 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.0.2'
 
-    api 'com.github.SpringSmell:QuickAsync:1.0.2'
-    api 'com.github.SpringSmell:QuickHttpService:1.0.6'
-    api 'com.github.SpringSmell:QuickDialog:1.0.2'
-    api 'com.github.SpringSmell:QuickAdapter:1.0.6'
-    api 'com.github.SpringSmell:QuickStartActivity:1.0.2'
+    api 'com.github.SpringSmell:QuickAsync:latest.release'
+    api 'com.github.SpringSmell:QuickHttpService:latest.release'
+    api 'com.github.SpringSmell:QuickDialog:latest.release'
+    api 'com.github.SpringSmell:QuickAdapter:latest.release'
+    api 'com.github.SpringSmell:QuickStartActivity:latest.release'
 }
 repositories {
     mavenCentral()

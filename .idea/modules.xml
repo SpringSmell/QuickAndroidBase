@@ -3,7 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/QuickAndroidBase.iml" filepath="$PROJECT_DIR$/QuickAndroidBase.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/QuickAndroidBase-app.iml" filepath="$PROJECT_DIR$/app/QuickAndroidBase-app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/quickbase/QuickAndroidBase-quickbase.iml" filepath="$PROJECT_DIR$/quickbase/QuickAndroidBase-quickbase.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/project-QuickAndroidBase.iml" filepath="$PROJECT_DIR$/project-QuickAndroidBase.iml" />
       <module fileurl="file://$PROJECT_DIR$/quickbase/quickbase.iml" filepath="$PROJECT_DIR$/quickbase/quickbase.iml" />
     </modules>
   </component>
