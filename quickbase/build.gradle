@@ -28,13 +28,14 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
 
     api 'com.github.SpringSmell:QuickAsync:latest.release'
     api 'com.github.SpringSmell:QuickHttpService:latest.release'
     api 'com.github.SpringSmell:QuickDialog:latest.release'
     api 'com.github.SpringSmell:QuickAdapter:latest.release'
     api 'com.github.SpringSmell:QuickStartActivity:latest.release'
+
 }
 repositories {
     mavenCentral()
