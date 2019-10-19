@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.SparseArray
+import android.widget.RemoteViews
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.BADGE_ICON_NONE
@@ -20,7 +21,6 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import java.io.Serializable
-import kotlin.math.abs
 
 
 /**
@@ -31,19 +31,16 @@ import kotlin.math.abs
  * @email chrisSpringSmell@gmail.com
  */
 object Notify {
-    val actionShortcut = "com.android.launcher.action.INSTALL_SHORTCUT"
-    val shortcutName = javaClass.`package`.name + "-" + javaClass.simpleName + ":shortcutName"
-    val shortcutIcon = javaClass.`package`.name + "-" + javaClass.simpleName + ":shortcutIcon"
-    val shortcutPackageName =
-        javaClass.`package`.name + "-" + javaClass.simpleName + ":shortcutPackageName"
-    val shortcutTargetName =
-        javaClass.`package`.name + "-" + javaClass.simpleName + ":shortcutTargetName"
+    val actionShortcut = "com.android.launcher.ACTION.INSTALL_SHORTCUT"
+    val shortcutName = "shortcutName"
+    val shortcutIcon = "shortcutIcon"
+    val shortcutPackageName = "shortcutPackageName"
+    val shortcutTargetName = "shortcutTargetName"
 
-    val action = javaClass.`package`.name + "-" + javaClass.simpleName + ":action"
-    val actionCancel = javaClass.`package`.name + "-" + javaClass.simpleName + ":actionCancel"
-    val actionClick = javaClass.`package`.name + "-" + javaClass.simpleName + ":actionClick"
-    val actionNotificationId =
-        javaClass.`package`.name + "-" + javaClass.simpleName + ":actionNotificationId"
+    val ACTION = "ACTION"
+    val ACTION_CANCEL = "ACTION_CANCEL"
+    val ACTION_CLICK = "ACTION_CLICK"
+    val NOTIFY_ID = "NOTIFY_ID"
 
     val notificationListeners: SparseArray<(context: Context, intent: Intent) -> Unit> by lazy { return@lazy SparseArray<((context: Context, intent: Intent) -> Unit)>() }
     val notificationManager: NotificationManager by lazy {
@@ -64,143 +61,12 @@ object Notify {
             channel.lightColor = Color.RED
             notificationManager.createNotificationChannel(channel)
         }
-        val intentFilter = IntentFilter(action)
+        val intentFilter = IntentFilter(ACTION)
         intentFilter.addAction(actionShortcut)
         QuickAndroid.applicationContext.registerReceiver(NotificationReceiver(), intentFilter)
     }
 
-    /**
-     * 临时通知，允许移除
-     * 该通知只响应点击动作
-     */
-    fun normal(@DrawableRes icon: Int, title: String, content: String) {
-        val notificationId = abs(System.currentTimeMillis().toInt())
-        notify(
-            notificationId,
-            NotificationCompat.Builder(
-                QuickAndroid.applicationContext,
-                QuickAndroid.applicationContext.packageName
-            )
-                .setSmallIcon(icon)
-                .setContentTitle(title)
-                .setContentText(content)
-                .setOngoing(false)
-                .setVisibility(VISIBILITY_PRIVATE)
-                .setAutoCancel(true),
-            null,
-            null,
-            null
-        )
-    }
-
-    /**
-     * 临时通知，允许移除
-     * 该通知只响应点击动作
-     * @param intentClick 传递自定义内容，用于点击回调返回内容
-     */
-    fun normal(
-        @DrawableRes icon: Int, title: String,
-        content: String,
-        intentClick: Intent,
-        onNotificationListener: ((context: Context, intent: Intent) -> Unit)
-    ) {
-        val notificationId = abs(System.currentTimeMillis().toInt())
-        notify(
-            notificationId,
-            NotificationCompat.Builder(
-                QuickAndroid.applicationContext,
-                QuickAndroid.applicationContext.packageName
-            )
-                .setSmallIcon(icon)
-                .setContentTitle(title)
-                .setContentText(content)
-                .setOngoing(false)
-                .setVisibility(VISIBILITY_PRIVATE)
-                .setAutoCancel(true),
-            intentClick,
-            null,
-            onNotificationListener
-        )
-    }
-
-
-    /**
-     * 临时通知-通知进度准备
-     */
-    fun progress(notifyId: Int, @DrawableRes icon: Int, title: String, content: String) {
-        notify(
-            notifyId,
-            NotificationCompat.Builder(
-                QuickAndroid.applicationContext,
-                QuickAndroid.applicationContext.packageName
-            )
-                .setSmallIcon(icon)
-                .setContentTitle(title)
-                .setContentText(content)
-                .setProgress(100, 0, true)
-                .setVisibility(VISIBILITY_PRIVATE)
-                .setOngoing(true)/*是否正在通知（是否不可以取消）*/
-                .setAutoCancel(false)/*是否点击时取消*/
-        )
-    }
-
-    /**
-     * 临时通知-通知进度中
-     */
-    fun progresses(
-        notifyId: Int, @DrawableRes icon: Int,
-        title: String,
-        content: String,
-        progress: Int
-    ) {
-        notify(
-            notifyId,
-            NotificationCompat.Builder(
-                QuickAndroid.applicationContext,
-                QuickAndroid.applicationContext.packageName
-            )
-                .setSmallIcon(icon)
-                .setContentTitle(title)
-                .setContentText(content)
-                .setVisibility(VISIBILITY_PRIVATE)
-                .setProgress(100, progress, false)
-                .setOngoing(true)/*是否正在通知（是否不可以取消）*/
-                .setAutoCancel(false)/*是否点击时取消*/
-        )
-    }
-
-    /**
-     * 临时通知-通知进度完成-点击取消
-     */
-    fun progressEnd(
-        notifyId: Int, @DrawableRes icon: Int,
-        title: String,
-        content: String,
-        intent: Intent?,
-        onNotificationListener: ((context: Context, intent: Intent) -> Unit)?
-    ) {
-        notify(
-            notifyId,
-            NotificationCompat.Builder(
-                QuickAndroid.applicationContext,
-                QuickAndroid.applicationContext.packageName
-            )
-                .setSmallIcon(icon)
-                .setContentTitle(title)
-                .setContentText(content)
-                .setVisibility(VISIBILITY_PRIVATE)
-                .setProgress(100, 100, false)
-                .setOngoing(false)/*是否正在通知（是否不可以取消）*/
-                .setAutoCancel(false)
-                .setDefaults(NotificationCompat.DEFAULT_ALL)
-            ,
-            intent,
-            null,
-            onNotificationListener
-        )
-    }
-
-    private fun action(
+    private fun notify(
         builder: Builder,
         onNotificationListener: ((context: Context, intent: Intent) -> Unit)?
     ) {
@@ -222,17 +88,6 @@ object Notify {
             notifyBuilder.setLargeIcon(builder.largeIcon)
 
         if (onNotificationListener != null) {
-            notifyBuilder.setDeleteIntent(
-                PendingIntent.getBroadcast(
-                    QuickAndroid.applicationContext,
-                    builder.notificationId,
-                    Intent(action)
-                        .putExtra(action, actionCancel)
-                        .putExtra(actionNotificationId, builder.notificationId)
-                    , PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            )
-
             notifyBuilder.setContentIntent(
                 PendingIntent.getBroadcast(
                     QuickAndroid.applicationContext,
@@ -241,7 +96,15 @@ object Notify {
                     , PendingIntent.FLAG_UPDATE_CURRENT
                 )
             )
-
+            notifyBuilder.setDeleteIntent(
+                PendingIntent.getBroadcast(
+                    QuickAndroid.applicationContext,
+                    builder.notificationId,
+                    builder.intent
+                        .setAction(ACTION_CANCEL)
+                    , PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            )
             notificationListeners.put(builder.notificationId, onNotificationListener)
         }
         notificationManager.notify(builder.notificationId, notifyBuilder.build())
@@ -260,10 +123,12 @@ object Notify {
         internal var progress = -1
         internal var indeterminate: Boolean = true
         internal var badgeIconType: Int = BADGE_ICON_NONE
+        internal var remoteViews: RemoteViews? = null
+
         internal val intent: Intent by lazy {
-            return@lazy Intent(action)
-                .putExtra(action, actionClick)
-                .putExtra(actionNotificationId, notificationId)
+            return@lazy Intent(ACTION_CLICK)
+                .putExtra(NOTIFY_ID, notificationId)
+                .setClass(QuickAndroid.applicationContext, NotificationReceiver::class.java)
         }
 
         fun content(@DrawableRes icon: Int, title: String, content: String): Builder {
@@ -324,6 +189,8 @@ object Notify {
             this.badgeIconType = badgeIconType
             return this
         }
+
+        fun remoteViews(remoteViews: RemoteViews) = also { this.remoteViews = remoteViews }
 
         fun addParams(key: String, value: Intent): Builder {
             intent.putExtra(key, value)
@@ -395,8 +262,8 @@ object Notify {
             return this
         }
 
-        fun action(onNotificationListener: ((context: Context, intent: Intent) -> Unit)? = null) {
-            action(this, onNotificationListener)
+        fun notify(onNotificationListener: ((context: Context, intent: Intent) -> Unit)? = null) {
+            notify(this, onNotificationListener)
         }
     }
 
@@ -415,21 +282,21 @@ object Notify {
         builder: NotificationCompat.Builder,
         onNotificationListener: ((context: Context, intent: Intent) -> Unit)
     ) {
-        val intentCancel = Intent(action)
-        intentCancel.putExtra(action, actionCancel)
-        intentCancel.putExtra(actionNotificationId, notificationId)
+        val intentCancel = Intent(ACTION)
+        intentCancel.putExtra(ACTION, ACTION_CANCEL)
+        intentCancel.putExtra(NOTIFY_ID, notificationId)
 
-        val intentClick = Intent(action)
-        intentCancel.putExtra(action, actionClick)
-        intentCancel.putExtra(actionNotificationId, notificationId)
+        val intentClick = Intent(ACTION)
+        intentCancel.putExtra(ACTION, ACTION_CLICK)
+        intentCancel.putExtra(NOTIFY_ID, notificationId)
         notify(notificationId, builder, intentClick, intentCancel, onNotificationListener)
     }
 
     /**
      * 自定义通知-不接管任何事件
      *
-     * 注意：如果需要使用自带的点击回调，请将在intent的action指定为{@link #action }例如：Intent(Notify.action)
-     * 并且将通知ID添加进intent{@link #actionNotificationId},例如：intentCancel.putExtra(actionNotificationId, notificationId)
+     * 注意：如果需要使用自带的点击回调，请将在intent的action指定为{@link #ACTION }例如：Intent(Notify.ACTION)
+     * 并且将通知ID添加进intent{@link #NOTIFY_ID},例如：intentCancel.putExtra(NOTIFY_ID, notificationId)
      *
      * 这里提供一个自定义通知View的写法
      * for example:
@@ -458,13 +325,13 @@ object Notify {
                     notificationId,
                     if (intentCancel != null) {
                         intentCancel
-                            .setAction(action)
-                            .putExtra(action, actionCancel)
-                            .putExtra(actionNotificationId, notificationId)
+                            .setAction(ACTION)
+                            .putExtra(ACTION, ACTION_CANCEL)
+                            .putExtra(NOTIFY_ID, notificationId)
                     } else
-                        Intent(action)
-                            .putExtra(action, actionCancel)
-                            .putExtra(actionNotificationId, notificationId)
+                        Intent(ACTION)
+                            .putExtra(ACTION, ACTION_CANCEL)
+                            .putExtra(NOTIFY_ID, notificationId)
                     , PendingIntent.FLAG_UPDATE_CURRENT
                 )
             )
@@ -475,13 +342,13 @@ object Notify {
                     notificationId,
                     if (intentClick != null) {
                         intentClick
-                            .setAction(action)
-                            .putExtra(action, actionClick)
-                            .putExtra(actionNotificationId, notificationId)
+                            .setAction(ACTION)
+                            .putExtra(ACTION, ACTION_CLICK)
+                            .putExtra(NOTIFY_ID, notificationId)
                     } else
-                        Intent(action)
-                            .putExtra(action, actionClick)
-                            .putExtra(actionNotificationId, notificationId)
+                        Intent(ACTION)
+                            .putExtra(ACTION, ACTION_CLICK)
+                            .putExtra(NOTIFY_ID, notificationId)
                     , PendingIntent.FLAG_UPDATE_CURRENT
                 )
             )
@@ -588,7 +455,7 @@ object Notify {
      * 快捷方式回调数据构建
      */
     private fun shortcutCallbackBuild(intent: Intent, builder: ShortcutBuilder): Intent {
-        intent.putExtra(actionNotificationId, builder.targetName.hashCode())
+        intent.putExtra(NOTIFY_ID, builder.targetName.hashCode())
         intent.putExtra(shortcutName, builder.shortcutName)
 //        intent.putExtra(shortcutIcon, builder.shortcutIcon)/*8.0无法协带*/
         intent.putExtra(shortcutPackageName, builder.packageName)
@@ -658,7 +525,7 @@ object Notify {
 
     class NotificationReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            notificationListeners.get(intent.getIntExtra(actionNotificationId, 0))
+            notificationListeners.get(intent.getIntExtra(NOTIFY_ID, 0))
                 ?.invoke(context, intent)
         }
     }

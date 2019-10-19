@@ -2,7 +2,9 @@ package com.example.quickbase
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import kotlinx.android.synthetic.main.activity_main.*
+import org.quick.base.Notify
 
 class MainActivity : AppCompatActivity() {
 
@@ -10,12 +12,19 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         titleTv.setOnClickListener {
-            var i=cast<Long>()
+            var i = cast<Long>()
+        }
+        noticeTv.setOnClickListener {
+            Notify.Builder(123)
+                .content(R.mipmap.ic_launcher_round, "标题", "这是内容")
+                .notify { context, intent ->
+                    Log.e("notice", intent.action)
+                }
         }
     }
 
-     fun <T> cast():T{
-         var str="120"
-         return str .toInt() as T
+    fun <T> cast(): T {
+        var str = "120"
+        return str.toInt() as T
     }
 }
