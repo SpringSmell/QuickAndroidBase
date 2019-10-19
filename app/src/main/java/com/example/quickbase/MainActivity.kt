@@ -17,9 +17,13 @@ class MainActivity : AppCompatActivity() {
         noticeTv.setOnClickListener {
             Notify.Builder(123)
                 .content(R.mipmap.ic_launcher_round, "标题", "这是内容")
-                .notify { context, intent ->
-                    Log.e("notice", intent.action)
+                .onClickListener { context, intent ->
+                    Log.e("notice", "点击")
                 }
+                .onCancelListener { context, intent ->
+                    Log.e("notice", "取消")
+                }
+                .action()
         }
     }
 

@@ -42,7 +42,8 @@ object Notify {
     val ACTION_CLICK = "ACTION_CLICK"
     val NOTIFY_ID = "NOTIFY_ID"
 
-    val notificationListeners: SparseArray<(context: Context, intent: Intent) -> Unit> by lazy { return@lazy SparseArray<((context: Context, intent: Intent) -> Unit)>() }
+    val clickListeners: SparseArray<(context: Context, intent: Intent) -> Unit> by lazy { return@lazy SparseArray<((context: Context, intent: Intent) -> Unit)>() }
+    val cancelListeners: SparseArray<(context: Context, intent: Intent) -> Unit> by lazy { return@lazy SparseArray<((context: Context, intent: Intent) -> Unit)>() }
     val notificationManager: NotificationManager by lazy {
         return@lazy QuickAndroid.applicationContext.getSystemService(
             Context.NOTIFICATION_SERVICE
@@ -67,47 +68,52 @@ object Notify {
     }
 
     private fun notify(
-        builder: Builder,
-        onNotificationListener: ((context: Context, intent: Intent) -> Unit)?
+        builder: Builder
     ) {
-        val notifyBuilder = NotificationCompat.Builder(
-            QuickAndroid.applicationContext,
-            QuickAndroid.applicationContext.packageName
-        )
-            .setContentTitle(builder.title)
-            .setContentText(builder.content)
-            .setSmallIcon(builder.smallIcon)
-            .setVisibility(VISIBILITY_PRIVATE)
-            .setOngoing(builder.ongoing)/*是否正在通知（是否不可以取消）*/
-            .setAutoCancel(builder.autoCancel)
-            .setDefaults(builder.default)
-            .setBadgeIconType(builder.badgeIconType)
-        if (builder.progress != -1)
-            notifyBuilder.setProgress(builder.progressMax, builder.progress, builder.indeterminate)
-        if (builder.largeIcon != null)
-            notifyBuilder.setLargeIcon(builder.largeIcon)
+        builder.run {
+            val notifyBuilder = NotificationCompat.Builder(
+                QuickAndroid.applicationContext,
+                QuickAndroid.applicationContext.packageName
+            )
+                .setContentTitle(title)
+                .setContentText(content)
+                .setSmallIcon(smallIcon)
+                .setVisibility(VISIBILITY_PRIVATE)
+                .setOngoing(ongoing)/*是否正在通知（是否不可以取消）*/
+                .setAutoCancel(autoCancel)
+                .setDefaults(default)
+                .setBadgeIconType(badgeIconType)
+            if (progress != -1)
+                notifyBuilder.setProgress(progressMax, progress, indeterminate)
+            if (largeIcon != null)
+                notifyBuilder.setLargeIcon(largeIcon)
 
-        if (onNotificationListener != null) {
-            notifyBuilder.setContentIntent(
-                PendingIntent.getBroadcast(
-                    QuickAndroid.applicationContext,
-                    builder.notificationId,
-                    builder.intent
-                    , PendingIntent.FLAG_UPDATE_CURRENT
+            onClickListener?.run {
+                notifyBuilder.setContentIntent(
+                    PendingIntent.getBroadcast(
+                        QuickAndroid.applicationContext,
+                        notificationId,
+                        intent
+                        , PendingIntent.FLAG_UPDATE_CURRENT
+                    )
                 )
-            )
-            notifyBuilder.setDeleteIntent(
-                PendingIntent.getBroadcast(
-                    QuickAndroid.applicationContext,
-                    builder.notificationId,
-                    builder.intent
-                        .setAction(ACTION_CANCEL)
-                    , PendingIntent.FLAG_UPDATE_CURRENT
+                clickListeners.put(notificationId, onClickListener)
+            }
+
+            onCancelListener?.run {
+                notifyBuilder.setDeleteIntent(
+                    PendingIntent.getBroadcast(
+                        QuickAndroid.applicationContext,
+                        notificationId,
+                        (intent.clone() as Intent).setAction(ACTION_CANCEL)
+                        , PendingIntent.FLAG_UPDATE_CURRENT
+                    )
                 )
-            )
-            notificationListeners.put(builder.notificationId, onNotificationListener)
+                cancelListeners.put(notificationId, onCancelListener)
+            }
+
+            notificationManager.notify(notificationId, notifyBuilder.build())
         }
-        notificationManager.notify(builder.notificationId, notifyBuilder.build())
     }
 
     class Builder(var notificationId: Int) {
@@ -124,12 +130,20 @@ object Notify {
         internal var indeterminate: Boolean = true
         internal var badgeIconType: Int = BADGE_ICON_NONE
         internal var remoteViews: RemoteViews? = null
+        internal var onClickListener: ((context: Context, intent: Intent) -> Unit)? = null
+        internal var onCancelListener: ((context: Context, intent: Intent) -> Unit)? = null
 
         internal val intent: Intent by lazy {
             return@lazy Intent(ACTION_CLICK)
                 .putExtra(NOTIFY_ID, notificationId)
                 .setClass(QuickAndroid.applicationContext, NotificationReceiver::class.java)
         }
+
+        fun onClickListener(onClickListener: ((context: Context, intent: Intent) -> Unit)) =
+            also { this.onClickListener = onClickListener }
+
+        fun onCancelListener(onCancelListener: ((context: Context, intent: Intent) -> Unit)) =
+            also { this.onCancelListener = onCancelListener }
 
         fun content(@DrawableRes icon: Int, title: String, content: String): Builder {
             this.smallIcon = icon
@@ -262,8 +276,8 @@ object Notify {
             return this
         }
 
-        fun notify(onNotificationListener: ((context: Context, intent: Intent) -> Unit)? = null) {
-            notify(this, onNotificationListener)
+        fun action() {
+            notify(this)
         }
     }
 
@@ -353,7 +367,7 @@ object Notify {
                 )
             )
 
-            notificationListeners.put(notificationId, onNotificationListener)
+            clickListeners.put(notificationId, onNotificationListener)
         }
         notificationManager.notify(notificationId, builder.build())
     }
@@ -382,7 +396,7 @@ object Notify {
         builder: ShortcutBuilder,
         onSuccessListener: (context: Context, intent: Intent) -> Unit
     ) {
-        notificationListeners.put(builder.targetName.hashCode(), onSuccessListener)
+        clickListeners.put(builder.targetName.hashCode(), onSuccessListener)
         val callbackIntent = shortcutCallbackBuild(
             Intent(
                 QuickAndroid.applicationContext,
@@ -432,7 +446,7 @@ object Notify {
         builder: ShortcutBuilder,
         onSuccessListener: (context: Context, intent: Intent) -> Unit
     ) {
-        notificationListeners.put(builder.targetName.hashCode(), onSuccessListener)
+        clickListeners.put(builder.targetName.hashCode(), onSuccessListener)
 
         val targetIntent = shortcutCallbackBuild(Intent(Intent.ACTION_MAIN), builder).setComponent(
             ComponentName(
@@ -525,8 +539,10 @@ object Notify {
 
     class NotificationReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            notificationListeners.get(intent.getIntExtra(NOTIFY_ID, 0))
-                ?.invoke(context, intent)
+            if (intent.action == ACTION_CLICK)
+                clickListeners.get(intent.getIntExtra(NOTIFY_ID, 0))?.invoke(context, intent)
+            else
+                cancelListeners.get(intent.getIntExtra(NOTIFY_ID, 0))?.invoke(context, intent)
         }
     }
 }
