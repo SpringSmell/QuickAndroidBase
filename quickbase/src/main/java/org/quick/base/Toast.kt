@@ -27,34 +27,39 @@ class Toast private constructor() {
         return this
     }
 
-    fun show(msg: CharSequence): ViewHolder {
+    fun show(msg: CharSequence?, listener: ((toast: Toast, vh: ViewHolder) -> Unit)?) {
         Async.runOnUiThread {
-            val toast = config(msg)
+            val toast = config(msg, listener)
             toast.show()
         }
-        return createViewHolder()
     }
 
-    private fun config(msg: CharSequence): Toast {
-        if (toast == null || toast?.view?.id != builder.resId) {/*布局发生变化将重新初始化*/
+    private fun config(
+        msg: CharSequence?,
+        listener: ((toast: Toast, vh: ViewHolder) -> Unit)?
+    ): Toast {
+        if (toast == null || toast!!.view.tag != builder.resId) {/*布局发生变化将重新初始化*/
             toast = Toast(QuickAndroid.applicationContext)
             toast?.view = createViewHolder().itemView
         }
-        holder?.setText(R.id.msgTv, msg)/*自定义View将无法设置msg*/
-        toast?.duration = builder.duration
-        toast?.setGravity(builder.gravity, builder.xOffset, builder.yOffset)
+        if (builder.isDefault)
+            createViewHolder().setText(R.id.msgTv, msg)/*自定义View将无法设置msg*/
+
+        toast?.run {
+            listener?.invoke(this, createViewHolder())
+            duration = builder.duration
+            setGravity(builder.gravity, builder.xOffset, builder.yOffset)
+        }
+
         return toast!!
     }
 
-    @SuppressLint("ResourceType")
     private fun createViewHolder(): ViewHolder {
-        if (holder?.itemView?.id != builder.resId) {
+        if (holder?.itemView?.tag != builder.resId) {
             val tempView =
-                (QuickAndroid.applicationContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater).inflate(
-                    builder.resId,
-                    null
-                )
-            tempView.id = builder.resId
+                (QuickAndroid.applicationContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater)
+                    .inflate(builder.resId, null)
+            tempView.tag = builder.resId
             holder = ViewHolder(tempView)
         }
         return holder!!
@@ -89,12 +94,13 @@ class Toast private constructor() {
         internal var duration: Int = Toast.LENGTH_SHORT
         internal var xOffset = 0
         internal var yOffset = 200
-
-        fun gravity(gravity: Int, xOffset: Int = 0, yOffset: Int = 0): Builder {
+        internal val isDefault by lazy {
+            return@lazy resId==R.layout.app_toast
+        }
+        fun gravity(gravity: Int, xOffset: Int = 0, yOffset: Int = 0) = also {
             this.gravity = gravity
             this.xOffset = xOffset
             this.yOffset = yOffset
-            return this
         }
 
         /**
@@ -102,15 +108,16 @@ class Toast private constructor() {
          * @see Toast.LENGTH_SHORT
          * @see Toast.LENGTH_LONG
          */
-        fun duration(duration: Int): Builder {
-            this.duration = duration
-            return this
-        }
+        fun duration(duration: Int) = also { this.duration = duration }
 
         fun build() = ClassHolder.INSTANCE.setupToast(this)
 
-        fun create(msg: String) = build().config(msg)
+        fun create(msg: String, listener: (toast: Toast, vh: ViewHolder) -> Unit) =
+            build().config(msg, listener)
 
-        fun show(msg: CharSequence) = build().show(msg)
+        fun show(msg: CharSequence) = build().show(msg, null)
+        fun show(listener: ((toast: Toast, vh: ViewHolder) -> Unit)) {
+            build().show("", listener)
+        }
     }
 }
