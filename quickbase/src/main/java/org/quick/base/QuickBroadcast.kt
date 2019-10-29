@@ -13,6 +13,7 @@ import android.util.SparseArray
 import androidx.annotation.NonNull
 import androidx.annotation.Size
 import java.io.Serializable
+
 /**
  * @describe 方便的使用动态广播
  * @author ChrisZou
@@ -23,26 +24,31 @@ import java.io.Serializable
 object QuickBroadcast {
 
     private const val ACTION = "org.quick.library.function#QuickBroadcastReceiverAction"
-    private val onBroadcastListeners = SparseArray<(action: String, intent: Intent) -> Unit>()
+    private val onBroadcastListeners = SparseArray<(action: String, intent: Intent) -> Boolean>()
     private val onBroadcastListenerActions = SparseArray<Array<String>>()
 
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent) {
             val actions = intent.getStringArrayExtra(ACTION)
             var action = ""
-            for (index in 0 until onBroadcastListenerActions.size())
-                if (onBroadcastListenerActions.valueAt(index).any { tempAction ->
-                        actions.any {
-                            if (it == tempAction) {
-                                action = tempAction
-                                true
-                            } else false
-                        }
-                    })
-                    onBroadcastListeners[onBroadcastListenerActions.keyAt(index)]?.invoke(
-                        action,
-                        intent
-                    )
+            for (index in 0 until onBroadcastListenerActions.size()) {
+                val temp = onBroadcastListenerActions.valueAt(index).any { tempAction ->
+                    actions.any {
+                        if (it == tempAction) {
+                            action = tempAction
+                            true
+                        } else
+                            false
+                    }
+                }
+                if (temp) {
+                    if (onBroadcastListeners[onBroadcastListenerActions.keyAt(index)] != null) {
+                        if (onBroadcastListeners[onBroadcastListenerActions.keyAt(index)]!!.invoke(action, intent))
+                            break
+                    }
+                }
+            }
+
         }
     }
 
@@ -67,12 +73,12 @@ object QuickBroadcast {
 
     /**
      * @param binder 绑定者，消息回调依赖此目标。若此目标重复将最后一个注册的有效
-     * @param onMsgListener 消息回调
+     * @param onMsgListener 消息回调  true：中断 false：继续
      * @param action 接收目标
      */
     fun addListener(
         binder: Any,
-        onMsgListener: (action: String, intent: Intent) -> Unit, @NonNull @Size(min = 1) vararg action: String
+        onMsgListener: (action: String, intent: Intent) -> Boolean, @NonNull @Size(min = 1) vararg action: String
     ) {
         onBroadcastListeners.put(binder.hashCode(), onMsgListener)
         onBroadcastListenerActions.put(binder.hashCode(), action as Array<String>?)
